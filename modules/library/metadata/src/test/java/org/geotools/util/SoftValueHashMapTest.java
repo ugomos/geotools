@@ -48,7 +48,7 @@ public final class SoftValueHashMapTest {
     @Test
     public void testStrongReferences() {
         final Random random = getRandom();
-        for (int pass=0; pass<4; pass++) {
+        for (int pass=0; pass<40; pass++) {
             // make sure we can keep as many strong references as the sample, since there is no guarantee
             // the distribution of random.nextBoolean() is uniform in the short term 
             final SoftValueHashMap<Integer,Integer> softMap = new SoftValueHashMap<Integer,Integer>(SAMPLE_SIZE);
@@ -87,7 +87,7 @@ public final class SoftValueHashMapTest {
         final Random random = getRandom();
         final SoftValueHashMap<Integer,Integer> softMap = new SoftValueHashMap<Integer,Integer>();
         final HashMap<Integer,Integer> strongMap = new HashMap<Integer,Integer>();
-        for (int pass=0; pass<2; pass++) {
+        for (int pass=0; pass<20; pass++) { // it was 2
             int count = 0;
             softMap.clear();
             strongMap.clear();

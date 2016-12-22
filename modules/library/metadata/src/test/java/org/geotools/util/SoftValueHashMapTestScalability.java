@@ -17,13 +17,15 @@ public class SoftValueHashMapTestScalability {
     private static final int SAMPLE_SIZE = 200;
     private static int NUMTHREADS = 512;
     private static int THREAD_CYCLES=(int)1E2;
+    private static int WARMUP_CYCLES = (int)1E2;
+    private static int TEST_CYCLES = (int)1E2;
 
     
     SoftValueHashMap<Integer, Integer> cache;
      
     // test get on the same value
-    //@Test
-    @Ignore
+    @Test
+    //@Ignore
     public void testScalability_1() throws InterruptedException {
         final Random random = getRandom();
         cache = new SoftValueHashMap<Integer, Integer>();
@@ -44,9 +46,7 @@ public class SoftValueHashMapTestScalability {
         // create many threads that access the same key
         ExecutorService executor = Executors.newFixedThreadPool(NUMTHREADS);
         
-        int warmUpCycles = (int)1E2;
-        int testCycles = (int)1E4;
-        for (int iter = 0; iter < (warmUpCycles + testCycles); iter++) {
+        for (int iter = 0; iter < (WARMUP_CYCLES + TEST_CYCLES); iter++) {
             Integer key;
             do {
                 key = random.nextInt(SAMPLE_SIZE);            
@@ -65,9 +65,9 @@ public class SoftValueHashMapTestScalability {
             latch.await();
             end = System.nanoTime() - start;
             
-            if(iter > warmUpCycles - 1)
+            if(iter > WARMUP_CYCLES - 1)
             {
-                if(iter == warmUpCycles)
+                if(iter == WARMUP_CYCLES)
                     mean = end;
                 else mean += end;
                 
@@ -78,7 +78,7 @@ public class SoftValueHashMapTestScalability {
             }
         }
         
-        double meanD = mean / (testCycles) * 1E-6;
+        double meanD = mean / (TEST_CYCLES) * 1E-6;
         double maxD = max * 1E-6;
         double minD = min * 1E-6;
         
@@ -95,8 +95,8 @@ public class SoftValueHashMapTestScalability {
     }
     
     // test sequence of put and get
-    @Test
-    //@Ignore
+    //@Test
+    @Ignore
     public void testScalability_2() throws InterruptedException {
         final Random random = getRandom();
         cache = new SoftValueHashMap<Integer, Integer>();
@@ -110,10 +110,7 @@ public class SoftValueHashMapTestScalability {
         // create many threads that access the same key
         ExecutorService executor = Executors.newFixedThreadPool(NUMTHREADS);        
         
-        int warmUpCycles = (int)1E2;
-        int testCycles = (int)1E4;
-                
-        for (int iter = 0; iter < (warmUpCycles + testCycles); iter++) {
+        for (int iter = 0; iter < (WARMUP_CYCLES + TEST_CYCLES); iter++) {
            
             final CountDownLatch latch = new CountDownLatch(NUMTHREADS);
             //System.out.println("Cycle: "+ iter);
@@ -128,9 +125,9 @@ public class SoftValueHashMapTestScalability {
             end = System.nanoTime() - start;
             
             //System.out.println("Cycle time: "+ end/1E6);
-            if(iter > warmUpCycles - 1)
+            if(iter > WARMUP_CYCLES - 1)
             {
-                if(iter == warmUpCycles)
+                if(iter == WARMUP_CYCLES)
                     mean = end;
                 else mean += end;
                 
@@ -141,7 +138,7 @@ public class SoftValueHashMapTestScalability {
             }     
         }
         
-        double meanD = mean / (testCycles) * 1E-6;
+        double meanD = mean / (TEST_CYCLES) * 1E-6;
         double maxD = max * 1E-6;
         double minD = min * 1E-6;
         

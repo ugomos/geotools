@@ -177,8 +177,7 @@ public class SoftValueHashMap<K,V> extends AbstractMap<K,V> {
      */
     @Override
     public boolean containsKey(final Object key) {
-            ensureNotNull(key);
-            return hash.containsKey(key);
+            return hash.containsKey(replaceNull(key));
     }
 
     /**
@@ -201,10 +200,10 @@ public class SoftValueHashMap<K,V> extends AbstractMap<K,V> {
      * @param key key whose associated value is to be returned. The key can't be null.
      * @return the value to which this map maps the specified key, or {@code null} if none.
      */
+    @SuppressWarnings("unchecked")
     @Override
     public V get(final Object key) {
-        ensureNotNull(key);
-        Object value = hash.get(key);
+        Object value = hash.get(replaceNull(key));
         if (value instanceof Reference) {
             /*
              * The value is a soft reference only if it was not used for a while and the map
@@ -223,13 +222,12 @@ public class SoftValueHashMap<K,V> extends AbstractMap<K,V> {
                  * because hash.get(key) should not have returned a non-null value if the
                  * key wasn't valid.
                  */
-                 @SuppressWarnings("unchecked")
                  final K k = (K) key;
                  hash.put(k, value);
-                 retainStrongly(k);
+                 retainStrongly((K) replaceNull(k));
              } else {
                  // The value has already been garbage collected.
-                 hash.remove(key);
+                 hash.remove(replaceNull(key));
              }
         }
         /*
@@ -246,25 +244,19 @@ public class SoftValueHashMap<K,V> extends AbstractMap<K,V> {
      * If there is already {@link #hardReferencesCount} hard references, then this method
      * replaces the oldest hard reference by a soft one. The key can't be null.
      */
+    @SuppressWarnings("unchecked")
     private void retainStrongly(final K key) {
         /*
-         * assert statements hold in single-threaded environments. In highly concurrent 
-         * environments, fields' values (e.g. the size of 'hardCache') may differ slightly
-         * from what expected.
+         * In highly concurrent environments, fields' values (e.g. the size of 'hardCache')
+         *  may differ slightly from what expected.
          */
-        ensureNotNull(key);
-        assert !hardCache.contains(key) : key;
-        hardCache.add(key);
+        hardCache.add((K) replaceNull(key));
             if (hardCache.size() > hardReferencesCount) {
                 // Remove the last entry if list longer than hardReferencesCount
                 final K toRemove = hardCache.poll();
-                final Object value = hash.get(toRemove);
-                assert value != null && !(value instanceof Reference) : toRemove;
-                @SuppressWarnings("unchecked")
+                final Object value = hash.get(replaceNull(toRemove));
                 final V v = (V) value;
-                hash.put(toRemove, new Reference<K, V>(hash, toRemove, v, cleaner));
-                assert hardCache.size() == hardReferencesCount;
-                assert isValid();
+                hash.put((K) replaceNull(toRemove), new Reference<K, V>(hash, (K) replaceNull(toRemove), v, cleaner));
              }
     }
 
@@ -277,11 +269,11 @@ public class SoftValueHashMap<K,V> extends AbstractMap<K,V> {
      * @return Previous value associated with specified key, or {@code null}
      *         if there was no mapping for key.
      */
+    @SuppressWarnings("unchecked")
     @Override
     public V put(final K key, final V value) {
         ensureNotNull(value);
-        ensureNotNull(key);
-        Object oldValue = hash.put(key, value);
+        Object oldValue = hash.put((K) replaceNull(key), value);
             if (oldValue instanceof Reference) {
                 oldValue = ((Reference) oldValue).getAndClear();
             } else if (oldValue != null) {
@@ -296,10 +288,9 @@ public class SoftValueHashMap<K,V> extends AbstractMap<K,V> {
                  * 
                  * In highly concurrent environments, key could have been already removed.
                  */                 
-                 hardCache.remove(key);
+                 hardCache.remove((K) replaceNull(key));
             }
-            retainStrongly(key);
-            @SuppressWarnings("unchecked")
+            retainStrongly((K) replaceNull(key));
             final V v = (V) oldValue;
             return v;
     }
@@ -323,8 +314,7 @@ public class SoftValueHashMap<K,V> extends AbstractMap<K,V> {
      */
     @Override
     public V remove(final Object key) {
-        ensureNotNull(key);
-        Object oldValue = hash.remove(key);
+        Object oldValue = hash.remove(replaceNull(key));
             if (oldValue instanceof Reference) {
                 oldValue = ((Reference) oldValue).getAndClear();
             } else if (oldValue != null) {
@@ -332,7 +322,7 @@ public class SoftValueHashMap<K,V> extends AbstractMap<K,V> {
                  * See the comment in the 'put' method.
                  * In highly concurrent environments, key could have been already removed.
                  */
-                hardCache.remove(key);
+                hardCache.remove(replaceNull(key));
             }
             @SuppressWarnings("unchecked")
             final V v = (V) oldValue;
@@ -527,7 +517,7 @@ public class SoftValueHashMap<K,V> extends AbstractMap<K,V> {
                 Object value = candidate.getValue();
                 if (value instanceof Reference) {
                     value = ((Reference<K, V>) value).get();
-                    entry = new MapEntry<K,V>(candidate.getKey(), (V) value);
+                    entry = new MapEntry<K,V>((K) SoftValueHashMap.replaceNull(candidate.getKey()), (V) value);
                     return true;
                 }
                 if (value != null) {
@@ -629,7 +619,7 @@ public class SoftValueHashMap<K,V> extends AbstractMap<K,V> {
                 final Object value = get();
                 if(value != null) {
                     try {
-                        cleaner.clean(key, value);
+                        cleaner.clean(replaceNull(key), value);
                     } catch(Throwable t) {
                         // never let a bad implementation break soft reference cleaning
                         LOGGER.log(Level.SEVERE, "Exception occurred while cleaning soft referenced object", t);
@@ -638,18 +628,19 @@ public class SoftValueHashMap<K,V> extends AbstractMap<K,V> {
             }
             
             super.clear();
-            final Object old = hash.remove(key);
+            final Object old = hash.remove(replaceNull(key));
             /*
              * If the entry was used for an other value, then put back the old value. This
              * case may occurs if a new value was set in the hash map before the old value
              * was garbage collected.
              */
             if (old != this && old != null) {
-            hash.put(key, old);
+            hash.put((K) replaceNull(key), old);
            }
         }
     }
     
+
     /**
      * A delegate that can be used to perform clean up operation, such as resource closing,
      * before the values cached in soft part of the cache gets disposed of
@@ -662,5 +653,17 @@ public class SoftValueHashMap<K,V> extends AbstractMap<K,V> {
          * @param object
          */
         public void clean(Object key, Object object);
+    }
+    
+    /**
+     * Define placeholder to deal with null key values
+     */
+    private enum Null { PLACEHOLDER }
+
+    /**
+     * Replaces null with placeholder.
+     */
+    private static Object replaceNull(Object o) {
+      return o == null ? Null.PLACEHOLDER : o;
     }
 }

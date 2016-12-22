@@ -53,6 +53,11 @@ public final class SoftValueHashMapTest {
             // the distribution of random.nextBoolean() is uniform in the short term 
             final SoftValueHashMap<Integer,Integer> softMap = new SoftValueHashMap<Integer,Integer>(SAMPLE_SIZE);
             final HashMap<Integer,Integer>        strongMap = new HashMap<Integer,Integer>();
+            
+            softMap.get(null);
+            softMap.put(null, 2);
+            strongMap.put(null, 2);
+            
             for (int i=0; i<SAMPLE_SIZE; i++) {
                 final Integer key   = random.nextInt(SAMPLE_SIZE);
                 final Integer value = random.nextInt(SAMPLE_SIZE);
@@ -74,6 +79,8 @@ public final class SoftValueHashMapTest {
                 }
                 assertEquals("equals:", strongMap, softMap);
             }
+            
+            softMap.remove(null);
         }
     }
 

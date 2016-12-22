@@ -511,7 +511,6 @@ public class SoftValueHashMap<K,V> extends AbstractMap<K,V> {
          */
         @SuppressWarnings("unchecked")
         private boolean findNext() {
-            //assert Thread.holdsLock(hash);
             while (iterator.hasNext()) {
                 final Map.Entry<K,Object> candidate = iterator.next();
                 Object value = candidate.getValue();
